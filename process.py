@@ -63,12 +63,20 @@ class Nodule_classifier:
         self.input_size = 64
         self.input_spacing = 1.0
 
-        self.model = CustomResnet3DBuilder.build_resnet_18((1, 64, 64, 64), 3)
-        self.model.load_weights(
-            "/opt/algorithm/models/resnet_noduletype_best_type_val_accuracy.h5",
+        self.model_mal = CustomResnet3DBuilder.build_resnet_18((1, 64, 64, 64), 3)
+        self.model_mal.load_weights(
+            "/opt/algorithm/models/best_weights_mal.h5",
             by_name=True,
             skip_mismatch=True,
         )
+
+        self.model_type = CustomResnet3DBuilder.build_resnet_18((1, 64, 64, 64), 3)
+        self.model_type.load_weights(
+            "/opt/algorithm/models/best_weights_type.h5",
+            by_name=True,
+            skip_mismatch=True,
+        )
+
 
         print("Models initialized")
 
@@ -140,9 +148,13 @@ class Nodule_classifier:
         # texture = np.argmax(self.model_nodule_type(nodule_data[None]).numpy())
 
         changed_array = np.expand_dims(nodule_data, 0)
-        predictions = self.model(changed_array)
-        malignancy = predictions[0].numpy()[0, 1]
-        texture = np.argmax(predictions[1].numpy())
+
+
+        predictions_mal = self.model_mal(changed_array)
+        malignancy = predictions_mal[0].numpy()[0, 1]
+
+        predictions_type = self.model_type(changed_array)
+        texture = np.argmax(predictions_mal[1].numpy())
 
 
         result = dict(
